@@ -48,8 +48,12 @@
 				"group": "navigation"
 			}],
 			"view/item/context": [{
-				"command": "asd",
-				"when": "viewItem == node-module",
+				"command": "local.module.checkUpdate",
+				"when": "view == visual-npm-local && viewItem == node-module",
+				"group": "inline"
+			}, {
+				"command": "global.module.checkUpdate",
+				"when": "view == visual-npm-global && viewItem == node-module",
 				"group": "inline"
 			}]
 		},
@@ -68,8 +72,15 @@
 				"dark": "img/dark/refresh.svg"
 			}
 		}, {
-			"command": "asd",
-			"title": "sd",
+			"command": "local.module.checkUpdate",
+			"title": "Check Update",
+			"icon": {
+				"light": "img/light/refresh.svg",
+				"dark": "img/dark/refresh.svg"
+			}
+		}, {
+			"command": "global.module.checkUpdate",
+			"title": "Check Update",
 			"icon": {
 				"light": "img/light/refresh.svg",
 				"dark": "img/dark/refresh.svg"

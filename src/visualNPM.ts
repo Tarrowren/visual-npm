@@ -1,5 +1,7 @@
-import { TreeDataProvider, TreeItem, EventEmitter, ProviderResult, TreeItemCollapsibleState, window, workspace } from "vscode";
+import { TreeDataProvider, TreeItem, EventEmitter, ProviderResult, TreeItemCollapsibleState, window } from "vscode";
 import { spawn } from "child_process";
+import { getRootPath, handlingErrors } from "./util";
+import { NPMErr, NPMErrType } from "./npmErr";
 
 export class VisualNPMProvider implements TreeDataProvider<NodeModule>{
     private location: NPM;
@@ -14,8 +16,12 @@ export class VisualNPMProvider implements TreeDataProvider<NodeModule>{
         this._onDidChangeTreeData.fire();
     }
 
-    checkUpdate(): void {
-        console.log(this.onDidChangeTreeData.toString());
+    // 检查更新
+    async checkUpdate(node: NodeModule): Promise<void> {
+        node.busy("checking...");
+        this._onDidChangeTreeData.fire(node);
+        await node.checkUpdate(this.location);
+        this._onDidChangeTreeData.fire(node);
     }
 
     getTreeItem(element: NodeModule): TreeItem {
@@ -42,103 +48,69 @@ export class VisualNPMProvider implements TreeDataProvider<NodeModule>{
                 let json: string = await new Promise(resolve => childProcess.stdout.on("data", data => resolve(data.toString())));
                 let dependencies = JSON.parse(json).dependencies;
                 return dependencies
-                    ? Object.keys(dependencies).map(key => new NodeModule(key, dependencies[key].version, this.location))
+                    ? Object.keys(dependencies).map(key => new NodeModule(key, dependencies[key].version))
                     : [];
             } else {
-                throw new NPMError(NPMErrorType.Error, "Stdout is null");
+                throw new NPMErr(NPMErrType.Error, "Stdout is null");
             }
         } catch (err) {
-            if (err.type === NPMErrorType.Error) {
-                window.showErrorMessage(err.message);
-            } else if (err.type === NPMErrorType.Warning) {
-                window.showWarningMessage(err.message);
-            } else if (err.type === NPMErrorType.Info) {
-                window.showInformationMessage(err.message);
-            } else {
-                window.showErrorMessage(err.message);
-            }
+            handlingErrors(err);
             return [];
         }
     }
-
-
 }
 
 export class NodeModule extends TreeItem {
-    public description: string;
-    public readonly label: string;
+    readonly label: string;
     private version: string;
-    public readonly location: NPM;
+    private attach = "";
 
-    constructor(label: string, version: string, location: NPM) {
+    constructor(label: string, version: string) {
         super(label, TreeItemCollapsibleState.None);
         this.label = label;
         this.version = version;
-        this.location = location;
-        this.description = this.version;
     }
 
     get tooltip(): string {
         return `${this.label} ${this.version}`;
     }
 
-    async changeDescript(): Promise<void> {
+    get description(): string {
+        return `${this.version}${this.attach === "" ? "" : `  [ ${this.attach} ]`}`;
+    }
+
+    busy(message: string): void {
+        this.attach = message;
+    }
+
+    async checkUpdate(location: NPM): Promise<void> {
         let command: string = "npm.cmd";
         let args: string[] = ["view", this.label, "version"];
-        if (this.location === NPM.Global) {
+        if (location === NPM.Global) {
             args.push("-g");
         }
         try {
             let childProcess = spawn(command, args, { stdio: "pipe", cwd: getRootPath() });
             if (childProcess.stdout !== null) {
-                let json = await new Promise(resolve => childProcess.stdout.on("data", data => resolve(data.toString())));
-
-                console.log(json);
-                this.description = "nnn";
-
+                let lastVersion: string = await new Promise(resolve => childProcess.stdout.on("data", data => resolve(data.toString())));
+                lastVersion = lastVersion.trim();
+                if (this.version === lastVersion) {
+                    this.attach = "";
+                } else {
+                    this.attach = `new! ${lastVersion}`;
+                }
             } else {
-                throw new NPMError(NPMErrorType.Error, "Stdout is null");
+                throw new NPMErr(NPMErrType.Error, "Stdout is null");
             }
-        } catch{
-
+        } catch (err) {
+            handlingErrors(err);
         }
     }
 
     contextValue = "node-module";
 }
 
-class NPMError extends Error {
-    public readonly type: NPMErrorType;
-    constructor(type: NPMErrorType, message: string) {
-        super(message);
-        this.type = type;
-    }
-}
-
-enum NPMErrorType {
-    Error,
-    Warning,
-    Info
-}
-
 export enum NPM {
     Local,
     Global
-}
-
-function getRootPath(): string {
-    let folders = workspace.workspaceFolders;
-    if (folders === undefined) {
-        throw new NPMError(NPMErrorType.Info, "Please open a folder");
-    }
-    let editor = window.activeTextEditor;
-    if (editor === undefined) {
-        return folders[0].uri.fsPath;
-    }
-    for (let folder of folders) {
-        if (editor.document.uri.fsPath.indexOf(folder.uri.fsPath) === 0) {
-            return folder.uri.fsPath;
-        }
-    }
-    return folders[0].uri.fsPath;
 }
