@@ -16,13 +16,64 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:extension.helloWorld"
+		"onView:visual-npm-local",
+		"onView:visual-npm-global"
 	],
-	"main": "./out/extension.js",
+	"main": "./dist/extension.js",
 	"contributes": {
+		"viewsContainers": {
+			"activitybar": [{
+				"id": "visual-npm",
+				"title": "visual npm",
+				"icon": "img/dep.svg"
+			}]
+		},
+		"views": {
+			"visual-npm": [{
+				"id": "visual-npm-local",
+				"name": "local"
+			}, {
+				"id": "visual-npm-global",
+				"name": "global"
+			}]
+		},
+		"menus": {
+			"view/title": [{
+				"command": "local.refresh",
+				"when": "view == visual-npm-local",
+				"group": "navigation"
+			}, {
+				"command": "global.refresh",
+				"when": "view == visual-npm-global",
+				"group": "navigation"
+			}],
+			"view/item/context": [{
+				"command": "asd",
+				"when": "viewItem == node-module",
+				"group": "inline"
+			}]
+		},
 		"commands": [{
-			"command": "extension.helloWorld",
-			"title": "Hello World"
+			"command": "local.refresh",
+			"title": "Refresh",
+			"icon": {
+				"light": "img/light/refresh.svg",
+				"dark": "img/dark/refresh.svg"
+			}
+		}, {
+			"command": "global.refresh",
+			"title": "Refresh",
+			"icon": {
+				"light": "img/light/refresh.svg",
+				"dark": "img/dark/refresh.svg"
+			}
+		}, {
+			"command": "asd",
+			"title": "sd",
+			"icon": {
+				"light": "img/light/refresh.svg",
+				"dark": "img/dark/refresh.svg"
+			}
 		}]
 	},
 	"scripts": {
