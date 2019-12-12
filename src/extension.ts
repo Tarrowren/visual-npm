@@ -5,11 +5,13 @@ export function activate(context: vscode.ExtensionContext) {
 	const localVisualNPMProvider = new VisualNPMProvider(NPM.Local);
 	vscode.window.registerTreeDataProvider("visual-npm-local", localVisualNPMProvider);
 	vscode.commands.registerCommand("local.refresh", () => localVisualNPMProvider.refresh());
+	vscode.commands.registerCommand("local.module.update", (node: NodeModule) => localVisualNPMProvider.update(node));
 	vscode.commands.registerCommand("local.module.checkUpdate", (node: NodeModule) => localVisualNPMProvider.checkUpdate(node));
 
 	const globalVisualNPMProvider = new VisualNPMProvider(NPM.Global);
 	vscode.window.registerTreeDataProvider("visual-npm-global", globalVisualNPMProvider);
 	vscode.commands.registerCommand("global.refresh", () => globalVisualNPMProvider.refresh());
+	vscode.commands.registerCommand("global.module.update", (node: NodeModule) => globalVisualNPMProvider.update(node));
 	vscode.commands.registerCommand("global.module.checkUpdate", (node: NodeModule) => globalVisualNPMProvider.checkUpdate(node));
 }
 

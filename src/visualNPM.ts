@@ -1,4 +1,4 @@
-import { TreeDataProvider, TreeItem, EventEmitter, ProviderResult, TreeItemCollapsibleState, window } from "vscode";
+import { TreeDataProvider, TreeItem, EventEmitter, ProviderResult, TreeItemCollapsibleState, commands } from "vscode";
 import { spawn } from "child_process";
 import { getRootPath, handlingErrors } from "./util";
 import { NPMErr, NPMErrType } from "./npmErr";
@@ -24,16 +24,16 @@ export class VisualNPMProvider implements TreeDataProvider<NodeModule>{
         this._onDidChangeTreeData.fire(node);
     }
 
+    async update(node: NodeModule): Promise<void> {
+        console.log(this.location);
+    }
+
     getTreeItem(element: NodeModule): TreeItem {
         return element;
     }
 
     getChildren(element?: NodeModule): ProviderResult<NodeModule[]> {
-        if (element) {
-            return [];
-        } else {
-            return this.getNodeModule();
-        }
+        return element ? null : this.getNodeModule();
     }
 
     private async getNodeModule(): Promise<NodeModule[]> {

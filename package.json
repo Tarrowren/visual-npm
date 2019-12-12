@@ -48,6 +48,14 @@
 				"group": "navigation"
 			}],
 			"view/item/context": [{
+				"command": "local.module.update",
+				"when": "view == visual-npm-local && viewItem == node-module",
+				"group": "inline"
+			}, {
+				"command": "global.module.update",
+				"when": "view == visual-npm-global && viewItem == node-module",
+				"group": "inline"
+			}, {
 				"command": "local.module.checkUpdate",
 				"when": "view == visual-npm-local && viewItem == node-module",
 				"group": "inline"
@@ -84,6 +92,20 @@
 			"icon": {
 				"light": "img/light/refresh.svg",
 				"dark": "img/dark/refresh.svg"
+			}
+		}, {
+			"command": "local.module.update",
+			"title": "Update",
+			"icon": {
+				"light": "img/light/edit.svg",
+				"dark": "img/dark/edit.svg"
+			}
+		}, {
+			"command": "global.module.update",
+			"title": "Update",
+			"icon": {
+				"light": "img/light/edit.svg",
+				"dark": "img/dark/edit.svg"
 			}
 		}]
 	},
