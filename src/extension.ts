@@ -1,18 +1,12 @@
 import * as vscode from 'vscode';
-import { VisualNPMProvider, NPM, NodeModule } from './visualNPM';
+import { VisualNPMProvider, NodeModule } from './visualNPM';
 
 export function activate(context: vscode.ExtensionContext) {
-	const localVisualNPMProvider = new VisualNPMProvider(NPM.Local);
-	vscode.window.registerTreeDataProvider("visual-npm-local", localVisualNPMProvider);
-	vscode.commands.registerCommand("local.refresh", () => localVisualNPMProvider.refresh());
-	vscode.commands.registerCommand("local.module.update", (node: NodeModule) => localVisualNPMProvider.update(node));
-	vscode.commands.registerCommand("local.module.checkUpdate", (node: NodeModule) => localVisualNPMProvider.checkUpdate(node));
-
-	const globalVisualNPMProvider = new VisualNPMProvider(NPM.Global);
-	vscode.window.registerTreeDataProvider("visual-npm-global", globalVisualNPMProvider);
-	vscode.commands.registerCommand("global.refresh", () => globalVisualNPMProvider.refresh());
-	vscode.commands.registerCommand("global.module.update", (node: NodeModule) => globalVisualNPMProvider.update(node));
-	vscode.commands.registerCommand("global.module.checkUpdate", (node: NodeModule) => globalVisualNPMProvider.checkUpdate(node));
+	const visualNPMProvider = new VisualNPMProvider();
+	vscode.window.registerTreeDataProvider("visual-npm-view", visualNPMProvider);
+	vscode.commands.registerCommand("visual-npm.refresh", (node: NodeModule) => visualNPMProvider.refresh(node));
+	vscode.commands.registerCommand("visual-npm.module.update", (node: NodeModule) => visualNPMProvider.update(node));
+	vscode.commands.registerCommand("visual-npm.module.checkUpdate", (node: NodeModule) => visualNPMProvider.checkUpdate(node));
 }
 
 export function deactivate() { }

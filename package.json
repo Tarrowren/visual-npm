@@ -16,8 +16,7 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onView:visual-npm-local",
-		"onView:visual-npm-global"
+		"onView:visual-npm-view"
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
@@ -30,82 +29,45 @@
 		},
 		"views": {
 			"visual-npm": [{
-				"id": "visual-npm-local",
-				"name": "local"
-			}, {
-				"id": "visual-npm-global",
-				"name": "global"
+				"id": "visual-npm-view",
+				"name": ""
 			}]
 		},
 		"menus": {
-			"view/title": [{
-				"command": "local.refresh",
-				"when": "view == visual-npm-local",
-				"group": "navigation"
-			}, {
-				"command": "global.refresh",
-				"when": "view == visual-npm-global",
-				"group": "navigation"
-			}],
 			"view/item/context": [{
-				"command": "local.module.update",
-				"when": "view == visual-npm-local && viewItem == node-module",
+				"command": "visual-npm.refresh",
+				"when": "view == visual-npm-view && viewItem == location",
 				"group": "inline"
 			}, {
-				"command": "global.module.update",
-				"when": "view == visual-npm-global && viewItem == node-module",
+				"command": "visual-npm.module.update",
+				"when": "view == visual-npm-view && viewItem == node-module",
 				"group": "inline"
 			}, {
-				"command": "local.module.checkUpdate",
-				"when": "view == visual-npm-local && viewItem == node-module",
-				"group": "inline"
-			}, {
-				"command": "global.module.checkUpdate",
-				"when": "view == visual-npm-global && viewItem == node-module",
+				"command": "visual-npm.module.checkUpdate",
+				"when": "view == visual-npm-view && viewItem == node-module",
 				"group": "inline"
 			}]
 		},
 		"commands": [{
-			"command": "local.refresh",
+			"command": "visual-npm.refresh",
 			"title": "Refresh",
 			"icon": {
 				"light": "img/light/refresh.svg",
 				"dark": "img/dark/refresh.svg"
 			}
 		}, {
-			"command": "global.refresh",
-			"title": "Refresh",
-			"icon": {
-				"light": "img/light/refresh.svg",
-				"dark": "img/dark/refresh.svg"
-			}
-		}, {
-			"command": "local.module.checkUpdate",
-			"title": "Check Update",
-			"icon": {
-				"light": "img/light/refresh.svg",
-				"dark": "img/dark/refresh.svg"
-			}
-		}, {
-			"command": "global.module.checkUpdate",
-			"title": "Check Update",
-			"icon": {
-				"light": "img/light/refresh.svg",
-				"dark": "img/dark/refresh.svg"
-			}
-		}, {
-			"command": "local.module.update",
+			"command": "visual-npm.module.update",
 			"title": "Update",
 			"icon": {
 				"light": "img/light/edit.svg",
 				"dark": "img/dark/edit.svg"
 			}
 		}, {
-			"command": "global.module.update",
-			"title": "Update",
+			"command": "visual-npm.module.checkUpdate",
+			"title": "Check Update",
 			"icon": {
-				"light": "img/light/edit.svg",
-				"dark": "img/dark/edit.svg"
+				"light": "img/light/refresh.svg",
+				"dark": "img/dark/refresh.svg"
 			}
 		}]
 	},

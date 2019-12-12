@@ -1,92 +1,117 @@
-import { TreeDataProvider, TreeItem, EventEmitter, ProviderResult, TreeItemCollapsibleState, commands } from "vscode";
+import { TreeDataProvider, TreeItem, EventEmitter, TreeItemCollapsibleState, window } from "vscode";
 import { spawn } from "child_process";
 import { getRootPath, handlingErrors } from "./util";
 import { NPMErr, NPMErrType } from "./npmErr";
 
 export class VisualNPMProvider implements TreeDataProvider<NodeModule>{
-    private location: NPM;
     private _onDidChangeTreeData = new EventEmitter<NodeModule>();
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-    constructor(location: NPM) {
-        this.location = location;
-    }
+    constructor() { }
 
-    refresh(): void {
-        this._onDidChangeTreeData.fire();
+    // 刷新
+    refresh(node: NodeModule): void {
+        this._onDidChangeTreeData.fire(node);
     }
 
     // 检查更新
     async checkUpdate(node: NodeModule): Promise<void> {
         node.busy("checking...");
         this._onDidChangeTreeData.fire(node);
-        await node.checkUpdate(this.location);
+        await node.checkUpdate();
         this._onDidChangeTreeData.fire(node);
     }
 
+    // 更新
     async update(node: NodeModule): Promise<void> {
-        console.log(this.location);
+        if (await window.showInformationMessage("Confirm Update?", "Yes", "No") === "Yes") {
+            console.log(node.location);
+        }
     }
 
     getTreeItem(element: NodeModule): TreeItem {
         return element;
     }
 
-    getChildren(element?: NodeModule): ProviderResult<NodeModule[]> {
-        return element ? null : this.getNodeModule();
+    async getChildren(element?: NodeModule): Promise<NodeModule[]> {
+        if (element) {
+            if (element.contextValue === "node-module") {
+                return [];
+            }
+            else {
+                return await this.getNodeModule(element);
+            }
+        } else {
+            return await this.getNodeModule();
+        }
     }
 
-    private async getNodeModule(): Promise<NodeModule[]> {
-        let command: string = "npm.cmd";
-        let args: string[] = ["list", "--depth=0", "--json"];
-        if (this.location === NPM.Global) {
-            args.push("-g");
-        }
-        try {
-            let childProcess = spawn(command, args, { stdio: "pipe", cwd: getRootPath() });
-            if (childProcess.stdout !== null) {
-                let json: string = await new Promise(resolve => childProcess.stdout.on("data", data => resolve(data.toString())));
-                let dependencies = JSON.parse(json).dependencies;
-                return dependencies
-                    ? Object.keys(dependencies).map(key => new NodeModule(key, dependencies[key].version))
-                    : [];
-            } else {
-                throw new NPMErr(NPMErrType.Error, "Stdout is null");
+    private async getNodeModule(node?: NodeModule): Promise<NodeModule[]> {
+        if (node) {
+            let command: string = "npm.cmd";
+            let args: string[] = ["list", "--depth=0", "--json"];
+            if (node.location === NPM.Global) {
+                args.push("-g");
             }
-        } catch (err) {
-            handlingErrors(err);
-            return [];
+            try {
+                let childProcess = spawn(command, args, { stdio: "pipe", cwd: getRootPath() });
+                if (childProcess.stdout !== null) {
+                    let json: string = await new Promise(resolve => childProcess.stdout.on("data", data => resolve(data.toString())));
+                    let dependencies = JSON.parse(json).dependencies;
+                    return dependencies
+                        ? Object.keys(dependencies).map(key => new NodeModule(key, node.location, dependencies[key].version))
+                        : [];
+                } else {
+                    throw new NPMErr(NPMErrType.Error, "Stdout is null");
+                }
+            } catch (err) {
+                handlingErrors(err);
+                return [];
+            }
+        } else {
+            return [new NodeModule("local", NPM.Local), new NodeModule("global", NPM.Global)];
         }
     }
 }
 
 export class NodeModule extends TreeItem {
     readonly label: string;
-    private version: string;
+    private version: string | undefined;
+    readonly location: NPM;
     private attach = "";
 
-    constructor(label: string, version: string) {
-        super(label, TreeItemCollapsibleState.None);
+    constructor(label: string, location: NPM, version?: string) {
+        super(label, version ? TreeItemCollapsibleState.None : TreeItemCollapsibleState.Collapsed);
         this.label = label;
         this.version = version;
+        version ? this.contextValue = "node-module" : this.contextValue = "location";
+        this.location = location;
     }
 
     get tooltip(): string {
-        return `${this.label} ${this.version}`;
+        if (this.version) {
+            return `${this.label} ${this.version}`;
+        } else {
+            return this.label;
+        }
     }
 
     get description(): string {
-        return `${this.version}${this.attach === "" ? "" : `  [ ${this.attach} ]`}`;
+        if (this.version) {
+            return `${this.version}${this.attach === "" ? "" : `  [ ${this.attach} ]`}`;
+        } else {
+            return this.attach;
+        }
     }
 
     busy(message: string): void {
         this.attach = message;
     }
 
-    async checkUpdate(location: NPM): Promise<void> {
+    async checkUpdate(): Promise<void> {
         let command: string = "npm.cmd";
         let args: string[] = ["view", this.label, "version"];
-        if (location === NPM.Global) {
+        if (this.location === NPM.Global) {
             args.push("-g");
         }
         try {
@@ -106,8 +131,6 @@ export class NodeModule extends TreeItem {
             handlingErrors(err);
         }
     }
-
-    contextValue = "node-module";
 }
 
 export enum NPM {
