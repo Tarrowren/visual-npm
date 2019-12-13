@@ -16,29 +16,30 @@ export class VisualNPMProvider implements TreeDataProvider<TreeItem>{
     // 检查更新
     checkAllUpdates(node: NPMRepo): void {
         node.getNodeModules().forEach(async n => {
-            if (n.setBusy("checking...")) {
-                this._onDidChangeTreeData.fire(n);
-                await n.checkUpdate();
-                this._onDidChangeTreeData.fire(n);
-            }
+            this.nodeWorkflow(n, "checking...", async () => {
+                let lastVersion = await n.checkUpdate();
+                if (lastVersion) {
+                    return `new ${lastVersion}`;
+                }
+            });
         });
     }
 
     // 更新
     async update(node: NodeModule): Promise<void> {
-        if (node.setBusy("updating...")) {
-            this._onDidChangeTreeData.fire(node);
+        this.nodeWorkflow(node, "updating...", async () => {
             let lastVersion = await node.checkUpdate();
             if (lastVersion) {
                 let result = await window.showInformationMessage(`Update "${node.label}" to version [${lastVersion}]?`, "Yes", "No");
                 if (result === "Yes") {
-                    return;
+                    await node.update(lastVersion);
+                    window.showInformationMessage(`"${node.label}" is up to date!`);
+                    return "";
                 }
             } else {
                 window.showInformationMessage(`"${node.label}" is up to date!`);
             }
-            this._onDidChangeTreeData.fire(node);
-        }
+        });
     }
 
     getTreeItem(element: TreeItem): TreeItem {
@@ -55,6 +56,14 @@ export class VisualNPMProvider implements TreeDataProvider<TreeItem>{
             }
         } else {
             return [new NPMRepo(NPM.Local), new NPMRepo(NPM.Global)];
+        }
+    }
+
+    async nodeWorkflow(node: NodeModule, message: string, callBack: () => Promise<string | undefined>) {
+        if (node.busy(message)) {
+            this._onDidChangeTreeData.fire(node);
+            node.free(await callBack());
+            this._onDidChangeTreeData.fire(node);
         }
     }
 }
@@ -125,13 +134,18 @@ export class NodeModule extends TreeItem {
         return `${this.version}${this.attach === "" ? "" : `  [ ${this.attach} ]`}`;
     }
 
-    setBusy(message: string): boolean {
+    busy(message: string): boolean {
         if (this.lock) {
             return false;
         }
         this.lock = true;
         this.attach = message;
         return true;
+    }
+
+    free(message: string | undefined): void {
+        this.lock = false;
+        this.attach = message ?? "";
     }
 
     async checkUpdate(): Promise<string | undefined> {
@@ -142,29 +156,38 @@ export class NodeModule extends TreeItem {
         }
         try {
             let childProcess = spawn(command, args, { stdio: "pipe", cwd: getRootPath() });
-            if (childProcess.stdout !== null) {
-                let lastVersion: string = await new Promise(resolve => childProcess.stdout.on("data", data => resolve(data.toString())));
-                lastVersion = lastVersion.trim();
-                if (this.version === lastVersion) {
-                    this.attach = "";
-                } else {
-                    this.attach = `new! ${lastVersion}`;
-                    return lastVersion;
-                }
-            } else {
+            if (childProcess.stdout === null) {
                 throw new NPMErr(NPMErrType.Error, "Stdout is null");
+            }
+            let lastVersion: string = await new Promise(resolve => childProcess.stdout.on("data", data => resolve(data.toString())));
+            lastVersion = lastVersion.trim();
+            if (lastVersion !== this.version) {
+                return lastVersion;
             }
         } catch (err) {
             handlingErrors(err);
-        } finally {
-            this.lock = false;
         }
     }
 
-    iconPath = {
-        dark: path.join(__filename, "..", "..", "resources", "dark", "node-module.svg"),
-        light: path.join(__filename, "..", "..", "resources", "light", "node-module.svg")
-    };
+    async update(lastVersion: string) {
+        let command: string = "npm.cmd";
+        let args: string[] = ["install", `${this.label}@${lastVersion}`];
+        if (this.location === NPM.Global) {
+            args.push("-g");
+        }
+        try {
+            let childProcess = spawn(command, args, { stdio: "pipe", cwd: getRootPath() });
+            if (childProcess.stdout === null) {
+                throw new NPMErr(NPMErrType.Error, "Stdout is null");
+            }
+            let a: string = await new Promise(resolve => childProcess.stdout.on("data", data => resolve(data.toString())));
+            console.log(a);
+            this.version = lastVersion;
+        } catch (err) {
+            handlingErrors(err);
+        }
+    }
+
     contextValue = "node-module";
 }
 
