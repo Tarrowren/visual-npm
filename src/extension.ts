@@ -1,12 +1,12 @@
-import * as vscode from 'vscode';
-import { VisualNPMProvider, NodeModule } from './visualNPM';
+import { ExtensionContext, window, commands } from "vscode";
+import { VisualNPMProvider, NodeModule, NPMRepo } from "./visualNPM";
 
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: ExtensionContext) {
 	const visualNPMProvider = new VisualNPMProvider();
-	vscode.window.registerTreeDataProvider("visual-npm-view", visualNPMProvider);
-	vscode.commands.registerCommand("visual-npm.refresh", (node: NodeModule) => visualNPMProvider.refresh(node));
-	vscode.commands.registerCommand("visual-npm.module.update", (node: NodeModule) => visualNPMProvider.update(node));
-	vscode.commands.registerCommand("visual-npm.module.checkUpdate", (node: NodeModule) => visualNPMProvider.checkUpdate(node));
+	window.registerTreeDataProvider("visual-npm", visualNPMProvider);
+	commands.registerCommand("visual-npm.checkAllUpdates", (node: NPMRepo) => visualNPMProvider.checkAllUpdates(node));
+	commands.registerCommand("visual-npm.refresh", (node: NPMRepo) => visualNPMProvider.refresh(node));
+	commands.registerCommand("visual-npm.update", (node: NodeModule) => visualNPMProvider.update(node));
 }
 
 export function deactivate() { }

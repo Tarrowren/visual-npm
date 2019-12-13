@@ -16,35 +16,35 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onView:visual-npm-view"
+		"onView:visual-npm"
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
 		"viewsContainers": {
 			"activitybar": [{
-				"id": "visual-npm",
+				"id": "visual-npm-bar",
 				"title": "visual npm",
-				"icon": "img/dep.svg"
+				"icon": "resources/visual-npm.svg"
 			}]
 		},
 		"views": {
-			"visual-npm": [{
-				"id": "visual-npm-view",
+			"visual-npm-bar": [{
+				"id": "visual-npm",
 				"name": ""
 			}]
 		},
 		"menus": {
 			"view/item/context": [{
 				"command": "visual-npm.refresh",
-				"when": "view == visual-npm-view && viewItem == location",
+				"when": "view == visual-npm && viewItem == npm-repo",
 				"group": "inline"
 			}, {
-				"command": "visual-npm.module.update",
-				"when": "view == visual-npm-view && viewItem == node-module",
+				"command": "visual-npm.checkAllUpdates",
+				"when": "view == visual-npm && viewItem == npm-repo",
 				"group": "inline"
 			}, {
-				"command": "visual-npm.module.checkUpdate",
-				"when": "view == visual-npm-view && viewItem == node-module",
+				"command": "visual-npm.update",
+				"when": "view == visual-npm && viewItem == node-module",
 				"group": "inline"
 			}]
 		},
@@ -52,22 +52,22 @@
 			"command": "visual-npm.refresh",
 			"title": "Refresh",
 			"icon": {
-				"light": "img/light/refresh.svg",
-				"dark": "img/dark/refresh.svg"
+				"light": "resources/light/refresh.svg",
+				"dark": "resources/dark/refresh.svg"
 			}
 		}, {
-			"command": "visual-npm.module.update",
+			"command": "visual-npm.checkAllUpdates",
+			"title": "Check All Updates",
+			"icon": {
+				"light": "resources/light/check-all-updates.svg",
+				"dark": "resources/dark/check-all-updates.svg"
+			}
+		}, {
+			"command": "visual-npm.update",
 			"title": "Update",
 			"icon": {
-				"light": "img/light/edit.svg",
-				"dark": "img/dark/edit.svg"
-			}
-		}, {
-			"command": "visual-npm.module.checkUpdate",
-			"title": "Check Update",
-			"icon": {
-				"light": "img/light/refresh.svg",
-				"dark": "img/dark/refresh.svg"
+				"light": "resources/light/update.svg",
+				"dark": "resources/dark/update.svg"
 			}
 		}]
 	},
